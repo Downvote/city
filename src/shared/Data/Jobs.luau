@@ -27,6 +27,12 @@ export type Job = {
 	listed: number?, -- the income as written below, before Tuning.Jobs.Pay
 	likes: { string },
 	lines: { string }, -- what they say at work, plainly, the way someone on shift does
+	-- a job from a work crate (Data/Crates): its rarity, and what customers ask for there and are
+	-- told (Sim/Visits takes these for a job with no lines of its own)
+	crate: string?,
+	asks: { string }?,
+	serves: { string }?,
+	move: { act: string, beat: number }?, -- how its work looks at a step with no gesture (Sim/Routine)
 }
 
 local Jobs = {}
@@ -212,6 +218,266 @@ for _, j in list do
 	j.income = math.floor(j.income * Tuning.Jobs.Pay / 5 + 0.5) * 5
 end
 
+-- Jobs from work crates. The user: "add work crates ... which give exclusive work spaces which are
+-- unique to crates, giving a random one with effectiveness scaling off rarity, some of the rarer
+-- jobs even giving gems. Crate workspaces are always better than any money ones, giving more
+-- effectiveness, and are more interesting than normal jobs". Their workplaces are in
+-- Build/Recipes/CrateWork and only come out of a crate (Data/Crates). Kept apart from Jobs.list,
+-- which is the coin jobs the economy's specs hold to their bounds; Jobs.get finds both. Each
+-- one's income is worked out below from the best coin job, so it stays ahead of all of them.
+local crateList: { Job } = {
+	{
+		id = "magician",
+		move = { act = "wave", beat = 3.5 },
+		place = "magic stage",
+		name = "Street magician",
+		blurb = "Card tricks for a crowd.",
+		income = 0,
+		crate = "common",
+		likes = { "cheeky", "dramatic", "sunny" },
+		lines = {
+			"Pick a card, any card, and don't show me.",
+			"Is this your card? Don't tell me if it isn't.",
+			"Nothing up my sleeves, look.",
+			"The rabbit is on a break, so it's just me today.",
+		},
+		asks = { "Do the one with the coins again, please.", "How did you do that?", "Can I pick a card?" },
+		serves = { "Watch the hat, {name}, not my hands.", "Ta da, it was in your pocket.", "A magician never tells." },
+	},
+	{
+		id = "fortune",
+		move = { act = "point", beat = 4.5 },
+		place = "fortune booth",
+		name = "Fortune teller",
+		blurb = "Reads cards and a crystal ball.",
+		income = 0,
+		crate = "common",
+		likes = { "dreamy", "gloomy", "dramatic" },
+		lines = {
+			"The ball is cloudy this morning, give it a minute.",
+			"I see a long walk in your future, probably to the shops.",
+			"Sit down, and keep your hands on the table.",
+			"The cards never lie, but they do exaggerate.",
+		},
+		asks = { "What's my week going to be like?", "Will it rain on Saturday?", "Read my cards, please." },
+		serves = {
+			"Good news is coming, {name}, just slowly.",
+			"You'll find something you lost.",
+			"Lucky colour today is green.",
+		},
+	},
+	{
+		id = "critic",
+		move = { act = "point", beat = 3.5 },
+		place = "tasting table",
+		name = "Food critic",
+		blurb = "Tastes everything and writes it down.",
+		income = 0,
+		crate = "common",
+		likes = { "foodie", "proud", "prickly" },
+		lines = {
+			"A bit more salt and this would be a nine.",
+			"I'm not hungry, I'm working.",
+			"The crust is good, the middle is a seven.",
+			"Write that down, the soup was too hot to taste.",
+		},
+		asks = { "Is the new bakery any good?", "What should I cook tonight?", "Try my jam, be honest." },
+		serves = { "Eight out of ten, {name}, the bread let it down.", "Go for the soup.", "Less sugar next time." },
+	},
+	{
+		id = "radio",
+		move = { act = "wave", beat = 4 },
+		place = "radio booth",
+		name = "Radio host",
+		blurb = "Plays songs and reads out the town's news.",
+		income = 0,
+		crate = "uncommon",
+		likes = { "sunny", "bold", "cheeky" },
+		lines = {
+			"Morning, everyone, you're listening to the town radio.",
+			"Next up, a song for everyone stuck at work.",
+			"Call in if you've seen a lost umbrella.",
+			"That's the news, now back to the music.",
+		},
+		asks = { "Can you play my song?", "Say hi to my mum on air?", "Any news today?" },
+		serves = {
+			"This next one goes out to {name}.",
+			"You're on the air, say hello.",
+			"I'll play it after the weather.",
+		},
+	},
+	{
+		id = "detective",
+		move = { act = "point", beat = 4 },
+		place = "agency",
+		name = "Detective",
+		blurb = "Finds lost things and solves small mysteries.",
+		income = 0,
+		crate = "uncommon",
+		likes = { "bookish", "cool", "nervous" },
+		lines = {
+			"Somebody took the last biscuit, and I will find out who.",
+			"The clues all point to the cat.",
+			"Never trust a pigeon, that's my rule.",
+			"I've got three cases open and one of them is a sock.",
+		},
+		asks = { "I can't find my keys anywhere.", "Who's been eating my tomatoes?", "Can you find my hat?" },
+		serves = { "Check your coat pocket, {name}.", "It was the wind, case closed.", "I'll look into it." },
+	},
+	{
+		id = "tester",
+		move = { act = "point", beat = 2.5 },
+		place = "game lab",
+		name = "Game tester",
+		blurb = "Plays new games and finds what's broken.",
+		income = 0,
+		crate = "uncommon",
+		likes = { "easygoing", "cheeky", "shy" },
+		lines = {
+			"Found another bug, the frog walks through walls.",
+			"Level three is too hard, writing that down.",
+			"One more go, then I'll write the report.",
+			"I've jumped into this wall two hundred times for science.",
+		},
+		asks = { "Can I have a go?", "Is it any good yet?", "Any new games out?" },
+		serves = {
+			"Here, {name}, try not to fall in the lava.",
+			"Press jump twice, trust me.",
+			"Tell me if it freezes.",
+		},
+	},
+	{
+		id = "inventor",
+		move = { act = "toolslash", beat = 2.4 },
+		place = "lab",
+		name = "Inventor",
+		blurb = "Builds odd machines that mostly work.",
+		income = 0,
+		crate = "rare",
+		likes = { "bookish", "bold", "dreamy" },
+		lines = {
+			"Stand back, this one only sparks a little.",
+			"The toast machine works, it just throws the toast.",
+			"I need a smaller screw and a bigger idea.",
+			"It worked yesterday, I promise.",
+		},
+		asks = { "Can you fix my clock?", "What does that one do?", "Is it safe to touch?" },
+		serves = {
+			"Fixed it, {name}, it also tells the weather now.",
+			"Don't press the red button.",
+			"It's mostly safe.",
+		},
+	},
+	{
+		id = "stargazer",
+		move = { act = "point", beat = 5 },
+		place = "telescope",
+		name = "Stargazer",
+		blurb = "Maps the sky and names new stars.",
+		income = 0,
+		crate = "rare",
+		likes = { "dreamy", "gentle", "bookish" },
+		lines = {
+			"That bright one there isn't a star, it's a planet.",
+			"Clear skies tonight, I can feel it.",
+			"I found a new star and I'm still thinking of a name.",
+			"Give the telescope a moment, it's shy.",
+		},
+		asks = { "Can I look through it?", "Which one is the brightest?", "Can a star be named after me?" },
+		serves = { "Have a look, {name}, the one on the left.", "That one's yours now.", "Wait for it to get dark." },
+	},
+	{
+		id = "ceo",
+		move = { act = "point", beat = 4 },
+		place = "office",
+		name = "CEO",
+		blurb = "Runs the town's biggest company from one desk.",
+		income = 0,
+		crate = "epic",
+		likes = { "proud", "bold", "polite" },
+		lines = {
+			"Hold my calls, I'm thinking.",
+			"The numbers are up, so I'm in a good mood.",
+			"We need a meeting about the meetings.",
+			"Get me the big chart, the one with the arrow.",
+		},
+		asks = { "Are you hiring?", "Can I have a minute?", "How's business?" },
+		serves = {
+			"You're hired, {name}, start on Monday.",
+			"Business is booming.",
+			"Five minutes, then I have a call.",
+		},
+	},
+	{
+		id = "hero",
+		move = { act = "cheer", beat = 6 },
+		place = "lookout",
+		name = "Hero",
+		blurb = "Keeps watch and helps anyone who calls.",
+		income = 0,
+		crate = "epic",
+		likes = { "bold", "sunny", "dramatic" },
+		lines = {
+			"All quiet out there, just how I like it.",
+			"Somebody's cat is up a tree again, I'm on it.",
+			"The cape is for looks, the boots do the work.",
+			"If you see the light come on, that means me.",
+		},
+		asks = { "My kite's stuck on the roof.", "Can I see the signal light?", "Is the town safe today?" },
+		serves = { "Kite's down, {name}, it's a bit bent.", "Safe and sound.", "Call me any time." },
+	},
+	{
+		id = "keeper",
+		move = { act = "point", beat = 3.5 },
+		place = "containment room",
+		name = "Anomaly keeper",
+		blurb = "Watches over the strange thing in the tank.",
+		income = 0,
+		crate = "legendary",
+		likes = { "cool", "gloomy", "nervous" },
+		lines = {
+			"It moved again when nobody was looking.",
+			"Readings are normal, which is not normal for it.",
+			"Don't tap the glass, it doesn't like that.",
+			"I gave it a name and it glowed, so that's a yes.",
+		},
+		asks = { "What is that thing?", "Can I see it glow?", "Is it awake?" },
+		serves = {
+			"It likes you, {name}, it went blue.",
+			"It's asleep, keep your voice down.",
+			"Nobody knows what it is.",
+		},
+	},
+}
+Jobs.crateList = crateList
+
+-- The best a coin job pays anyone (its income with its liking bonus): every crate job pays more,
+-- times its rarity's share in Tuning.Crates.Pay.
+local best = 0
+for _, j in list do
+	best = math.max(best, j.income)
+end
+Jobs.BestCoin = best * Tuning.Jobs.LikePay
+for _, j in crateList do
+	byId[j.id] = j
+	local k = Tuning.Crates.Pay[j.crate :: string] or 1
+	j.income = math.ceil(Jobs.BestCoin * k / 5) * 5
+	j.listed = j.income
+end
+
+-- Every job, the coin ones then the crate ones.
+local all: { Job } = table.clone(list)
+for _, j in crateList do
+	table.insert(all, j)
+end
+Jobs.all = all
+
+-- Is this a job from a crate?
+function Jobs.isCrate(id: string?): boolean
+	local j = id and byId[id]
+	return j ~= nil and j.crate ~= nil
+end
+
 -- Each job's own icon (UI/IconArt), wherever work is listed: the job rows in the town panel, the
 -- villager screen's picker and its Job button, the notice while you work, a story about work in
 -- the news (the user: "for work and news, make different icons for different news and work
@@ -229,6 +495,18 @@ local ICONS: { [string]: string } = {
 	postie = "letter",
 	icecream = "icecream",
 	librarian = "book",
+	-- the crate jobs (they may share with nothing else: the Crates spec checks it)
+	magician = "hat",
+	fortune = "moon",
+	critic = "mug",
+	radio = "music",
+	detective = "zoom",
+	tester = "gamepad",
+	inventor = "bulb",
+	stargazer = "star",
+	ceo = "briefcase",
+	hero = "flag",
+	keeper = "alert",
 }
 Jobs.Icons = ICONS
 

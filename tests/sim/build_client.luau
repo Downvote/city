@@ -540,8 +540,11 @@ run("every tab and tool opens without an error", function()
 			local shown = Fake.find(tray, function(d)
 				return d:IsA("GuiButton") and Fake.shown(d)
 			end)
-			-- (Keepsakes is empty until a villager gives you something: it says so instead)
-			local empty = labelOf(b):find("Keepsakes", 1, true) ~= nil and tray:FindFirstChild("Note", true) ~= nil
+			-- (Keepsakes is empty until a villager gives you something, and Crate until a work crate
+			-- gives you a workplace: each says so instead)
+			local label = labelOf(b)
+			local empty = (label:find("Keepsakes", 1, true) ~= nil or label:find("Crate", 1, true) ~= nil)
+				and tray:FindFirstChild("Note", true) ~= nil
 			check(#shown > 0 or empty, main .. " / " .. labelOf(b):gsub("^%s+", "") .. " fills the tray")
 			mouseAtPlot(220, 110)
 		end

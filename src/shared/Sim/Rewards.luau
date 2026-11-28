@@ -11,6 +11,7 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Achievements = require(script.Parent.Parent.Data.Achievements)
 local Playtime = require(script.Parent.Parent.Data.Playtime)
 local City = require(script.Parent.City)
+local Crates = require(script.Parent.Crates) -- (crates in the daily gift and achievements: Sim/Crates)
 
 local Rewards = {}
 
@@ -74,16 +75,31 @@ function Rewards.dailyGift(streak: number, run: number, vip: boolean?): (number,
 	return coins, gems
 end
 
--- Claims today's gift: moves the streak on. Returns whether it did and the coins and gems it pays.
-function Rewards.claimDaily(profile: any, today: number, vip: boolean?): (boolean, number, number)
+-- The crate a day of the run brings with the daily gift, or nil: every Tuning.Crates.DailyEvery
+-- days running, a work crate, then a pet crate the next time, and so on.
+function Rewards.dailyCrate(run: number): string?
+	local every = Tuning.Crates.DailyEvery
+	if run <= 0 or run % every ~= 0 then
+		return nil
+	end
+	return if (run // every) % 2 == 1 then "work" else "pet"
+end
+
+-- Claims today's gift: moves the streak on. Returns whether it did, the coins and gems it pays and
+-- the crate it gave (now held in the save), if any.
+function Rewards.claimDaily(profile: any, today: number, vip: boolean?): (boolean, number, number, string?)
 	local d = Rewards.daily(profile)
 	if d.last == today then
-		return false, 0, 0
+		return false, 0, 0, nil
 	end
 	local streak, run = Rewards.nextDaily(profile, today)
 	d.last, d.streak, d.run = today, streak, run
 	local coins, gems = Rewards.dailyGift(streak, run, vip)
-	return true, coins, gems
+	local crate = Rewards.dailyCrate(run)
+	if crate then
+		Crates.give(profile, crate, 1)
+	end
+	return true, coins, gems, crate
 end
 
 -- Playtime ------------------------------------------------------------------------------------------
@@ -186,21 +202,25 @@ function Rewards.achievements(profile: any): { Status }
 	return out
 end
 
--- Claims a finished achievement's gems once. Returns whether it did and the gems.
-function Rewards.claimAchievement(profile: any, id: any): (boolean, number)
+-- Claims a finished achievement's gems once. Returns whether it did, the gems and the crate it gave
+-- (now held in the save), if any.
+function Rewards.claimAchievement(profile: any, id: any): (boolean, number, string?)
 	if type(id) ~= "string" then
-		return false, 0
+		return false, 0, nil
 	end
 	local a = Achievements.get(id)
 	local got = achieved(profile)
 	if not a or got[id] then
-		return false, 0
+		return false, 0, nil
 	end
 	if a.value(profile, City.stats(profile)) < a.need then
-		return false, 0
+		return false, 0, nil
 	end
 	got[id] = true
-	return true, a.gems
+	if a.crate then
+		Crates.give(profile, a.crate, 1)
+	end
+	return true, a.gems, a.crate
 end
 
 -- The group -----------------------------------------------------------------------------------------

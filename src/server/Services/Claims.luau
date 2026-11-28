@@ -13,6 +13,7 @@ local Remotes = require(Shared.Net.Remotes)
 local Passes = require(Shared.Sim.Passes)
 local Rewards = require(Shared.Sim.Rewards)
 local ClaimAll = require(Shared.Sim.ClaimAll)
+local Goals = require(Shared.Data.Goals)
 
 local Data = require(script.Parent.Data)
 local Store = require(script.Parent.Store)
@@ -68,10 +69,15 @@ function Claims.start()
 		if haul.gems > 0 then
 			Data.addGems(player, haul.gems, true)
 		end
-		Data.push(player, "coins", "gems", "daily", "playtime", "achieved")
+		Data.push(player, "coins", "gems", "daily", "playtime", "achieved", "crates")
 		local notice = ClaimAll.rewardsNotice(haul)
 		if notice then
 			Data.notify(player, notice, "good")
+		end
+		-- and any crates the gift and the achievements gave (Sim/Crates: held in the Store)
+		local crateNote = ClaimAll.cratesNotice(haul.crates)
+		if crateNote then
+			Data.notify(player, crateNote, "good")
 		end
 		return true, { count = haul.count, coins = haul.coins, gems = haul.gems }
 	end
@@ -81,18 +87,30 @@ function Claims.start()
 		if not profile then
 			return false, "Your save isn't in yet."
 		end
-		local count, coins = ClaimAll.goals(profile)
+		local count, coins, ids = ClaimAll.goals(profile)
 		if count <= 0 then
 			return false, "Nothing to claim yet."
+		end
+		-- the crates the goals gave (Life.claimGoal held them in the save: Sim/Crates)
+		local crates = {}
+		for _, id in ids do
+			local g = Goals.get(id)
+			if g and g.crate then
+				table.insert(crates, g.crate)
+			end
 		end
 		-- (Life.claimGoal put the coins in the save already)
 		pcall(function()
 			player:SetAttribute("Coins", profile.coins)
 		end)
-		Data.push(player, "goals", "coins")
+		Data.push(player, "goals", "coins", "crates")
 		local notice = ClaimAll.goalsNotice(count, coins)
 		if notice then
 			Data.notify(player, notice, "good")
+		end
+		local crateNote = ClaimAll.cratesNotice(crates)
+		if crateNote then
+			Data.notify(player, crateNote, "good")
 		end
 		return true, { count = count, coins = coins }
 	end

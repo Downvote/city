@@ -87,6 +87,9 @@ Remotes.Functions = {
 	"PlotLike", -- (ownerId, on?) -> { likes, liked } or nil, why: likes a town, or takes the like back
 	"PlotVisit", -- (ownerId) -> ok, why: to their plot if they're here, else onto a copy of their town
 	"PlotLeave", -- () -> ok: off a copy and back home (or to the square without a plot)
+	-- crates and pets (Services/Crates, Sim/Crates): each checked on the server
+	"CrateOpen", -- (kind, "held" | "gems") -> ok, result or why: open a crate held, or buy one with gems and open it
+	"PetOwner", -- (petId, vid | false) -> ok, why: make a villager a pet's owner, or nobody
 }
 
 Remotes.Events = {
@@ -117,6 +120,9 @@ Remotes.Events = {
 	-- server -> client: { on = true, id, name, who, likes, liked, copy } while the player looks round
 	-- another player's town (`copy`: a copy of it, its owner away), { on = false } when they leave it
 	"Visiting",
+	-- server -> client: { vid, text } once, when the player first has the gems for a crate: one of
+	-- their villagers tells them about the crates (Services/Crates, UI/Crates)
+	"CrateTip",
 }
 
 local folder: Folder? = nil

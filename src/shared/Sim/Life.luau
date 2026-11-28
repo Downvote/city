@@ -31,6 +31,7 @@ local Titles = require(script.Parent.Titles)
 local Items = require(script.Parent.Parent.Data.Items)
 local Catalog = require(script.Parent.Parent.Build.Catalog)
 local Needs = require(script.Parent.Needs)
+local Crates = require(script.Parent.Crates) -- (a goal's crate: Sim/Crates)
 
 local L = Tuning.Life
 
@@ -332,7 +333,8 @@ function Life.goals(profile: any): { any }
 end
 
 -- What a goal pays besides its coins, as notices: a title to wear, a Build mode piece for free (a
--- keepsake, Sim/Keepsakes) and something special for the bag (Sim/Bag). Gives them to `profile`.
+-- keepsake, Sim/Keepsakes), a crate to open in the Store (Sim/Crates) and something special for the
+-- bag (Sim/Bag). Gives them to `profile`.
 local function extras(profile: any, g: any): { string }
 	local out = {}
 	if g.title and Titles.give(profile, g.title) then
@@ -342,6 +344,9 @@ local function extras(profile: any, g: any): { string }
 	if g.piece and Keepsakes.give(profile, g.piece) then
 		local def = Catalog.get(g.piece)
 		table.insert(out, Text.fill("{x} is yours to build, free.", { x = if def then def.name else g.piece }))
+	end
+	if g.crate and Crates.give(profile, g.crate, 1) then
+		table.insert(out, Text.fill("Your {x} crate is in the Store.", { x = g.crate }))
 	end
 	if g.thing then
 		local item = Items.get(g.thing)

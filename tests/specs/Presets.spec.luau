@@ -92,7 +92,10 @@ describe("Presets", function()
 		-- unique, as much as the starting house"
 		local jobs = {}
 		for _, def in Catalog.workplaces() do
-			jobs[def.id] = false
+			-- (but a crate's: it only comes out of a work crate, never with a building)
+			if not def.crate then
+				jobs[def.id] = false
+			end
 		end
 		for _, p in Presets.list do
 			for _, o in p.objects do

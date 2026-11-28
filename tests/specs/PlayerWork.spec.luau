@@ -208,7 +208,10 @@ describe("PlayerWork", function()
 		-- best paid workplace), and the top takes a long while: weeks of town days at one job
 		local best = 0
 		for _, def in Catalog.workplaces() do
-			best = math.max(best, PlayerWork.rate(def))
+			-- (the coin workplaces: a crate's pays more, and only comes out of a crate)
+			if not def.crate then
+				best = math.max(best, PlayerWork.rate(def))
+			end
 		end
 		local daySeconds = K.DayCap / best -- the shortest full day there is, at the start
 		expect(Skills.toNext(1) / SK.PerSecond <= daySeconds * 1.5).toBeTruthy()
@@ -293,8 +296,11 @@ describe("PlayerWork", function()
 			least = math.min(least, Jobs.pay(job, 1, START, "none"))
 		end
 		for _, def in Catalog.workplaces() do
-			best = math.max(best, PlayerWork.rate(def))
-			worst = math.min(worst, PlayerWork.rate(def))
+			-- (the coin workplaces: a crate's fills the same cap sooner, and only comes out of a crate)
+			if not def.crate then
+				best = math.max(best, PlayerWork.rate(def))
+				worst = math.min(worst, PlayerWork.rate(def))
+			end
 		end
 		-- A day at the cap is at most a quarter of what the least paid villager earns in one. The
 		-- City spec holds wages to four fifths of a keen player's coins in a town of three with

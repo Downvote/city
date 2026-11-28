@@ -57,11 +57,12 @@ describe("Catalog", function()
 		for _, def in Catalog.all() do
 			expect(type(def.name)).toBe("string")
 			-- (a keepsake is a gift from a villager, and free: Sim/Keepsakes; a piece bought with gems
-			-- costs no coins: Sim/GemPieces)
+			-- costs no coins: Sim/GemPieces; a crate workplace comes out of a crate: Sim/Crates)
 			local gems = (def :: any).gems
 			expect(
 				def.price > 0
 					or (def.cat == "keepsakes" and def.price == 0)
+					or (def.cat == "crates" and def.price == 0 and (def :: any).crate ~= nil)
 					or (type(gems) == "number" and gems > 0 and def.price == 0)
 			).toBeTruthy()
 			expect(Catalog.Places[def.place]).toBe(true)

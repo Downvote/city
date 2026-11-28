@@ -18,6 +18,7 @@ export type Achievement = {
 	icon: string, -- UI/Icons
 	need: number,
 	gems: number,
+	crate: string?, -- a crate it gives too, to open in the Store (Data/Crates: "work" or "pet")
 	value: (profile: any, city: any) -> number,
 }
 
@@ -157,9 +158,20 @@ Achievements.list = {
 	},
 } :: { Achievement }
 
+-- Some give a crate as well (the user: "Some work crates are also given through achievements,
+-- goals, daily rewards"; pet crates come the same ways).
+local CRATES: { [string]: string } = {
+	villager5 = "pet",
+	villager10 = "work",
+	level5 = "work",
+	villager30 = "pet",
+	level10 = "work",
+}
+
 local byId: { [string]: Achievement } = {}
 for _, a in Achievements.list do
 	byId[a.id] = a
+	a.crate = CRATES[a.id]
 end
 
 function Achievements.get(id: string): Achievement?

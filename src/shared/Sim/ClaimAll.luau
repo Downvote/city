@@ -13,6 +13,7 @@ local Playtime = require(script.Parent.Parent.Data.Playtime)
 local Text = require(script.Parent.Parent.Util.Text)
 local Rewards = require(script.Parent.Rewards)
 local Life = require(script.Parent.Life)
+local CrateData = require(script.Parent.Parent.Data.Crates)
 
 local ClaimAll = {}
 
@@ -25,6 +26,7 @@ export type Haul = {
 	playtime: number, -- how many playtime steps
 	achievements: { string }, -- the ids of the achievements
 	group: boolean, -- the group's gems
+	crates: { string }, -- the crates the gift and the achievements gave, by kind (now held: Sim/Crates)
 }
 
 -- Claims everything waiting in the Rewards menu on `today`. `vip` and `inGroup` are what the
@@ -38,13 +40,17 @@ function ClaimAll.rewards(profile: any, today: number, vip: boolean?, inGroup: b
 		playtime = 0,
 		achievements = {},
 		group = false,
+		crates = {},
 	}
-	local ok, coins, gems = Rewards.claimDaily(profile, today, vip)
+	local ok, coins, gems, crate = Rewards.claimDaily(profile, today, vip)
 	if ok then
 		haul.daily = true
 		haul.count += 1
 		haul.coins += coins
 		haul.gems += gems
+		if crate then
+			table.insert(haul.crates, crate)
+		end
 	end
 	-- the playtime steps go in order, the next one each time, until one isn't reached
 	for _ = 1, #Playtime.steps do
@@ -57,11 +63,14 @@ function ClaimAll.rewards(profile: any, today: number, vip: boolean?, inGroup: b
 		haul.gems += stepGems
 	end
 	for _, a in Achievements.list do
-		local got, aGems = Rewards.claimAchievement(profile, a.id)
+		local got, aGems, aCrate = Rewards.claimAchievement(profile, a.id)
 		if got then
 			table.insert(haul.achievements, a.id)
 			haul.count += 1
 			haul.gems += aGems
+			if aCrate then
+				table.insert(haul.crates, aCrate)
+			end
 		end
 	end
 	local got, groupGems = Rewards.claimGroup(profile, inGroup)
@@ -86,6 +95,18 @@ function ClaimAll.goals(profile: any): (number, number, { string })
 		end
 	end
 	return count, coins, ids
+end
+
+-- What crates a claim brought, said once: "A work crate is in the Store.", "2 crates are in the
+-- Store." (nil for none).
+function ClaimAll.cratesNotice(kinds: { string }): string?
+	if #kinds == 0 then
+		return nil
+	elseif #kinds == 1 then
+		local kind = CrateData.get(kinds[1])
+		return Text.fill("Your {x} is in the Store.", { x = if kind then string.lower(kind.name) else "crate" })
+	end
+	return Text.fill("{n} crates are in the Store.", { n = #kinds })
 end
 
 -- The one notice that says what a press brought in (nil when it brought nothing).

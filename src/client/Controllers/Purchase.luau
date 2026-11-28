@@ -64,6 +64,22 @@ function Purchase.gems(key: string)
 	end
 end
 
+-- Asks Roblox to sell the player a crate (Data/Passes' crates, by key). One with no id yet is coming
+-- soon. The server gives it once the receipt is paid (Services/Store), held in the Store to open.
+function Purchase.crate(key: string)
+	local product = PassData.crateProduct(key)
+	if not product then
+		return
+	end
+	if product.id == 0 then
+		soon(product.name .. "s aren't on sale for Robux yet.")
+		return
+	end
+	pcall(function()
+		MarketplaceService:PromptProductPurchase(Players.LocalPlayer, product.id)
+	end)
+end
+
 -- Calls `fn(owned)` now and whenever the player's passes change.
 function Purchase.watch(key: string, fn: (boolean) -> ()): () -> ()
 	fn(Purchase.has(key))

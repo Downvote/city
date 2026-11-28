@@ -22,6 +22,7 @@ local PlotLikes = require(script.Parent.PlotLikes)
 local PlotBoard = require(script.Parent.PlotBoard)
 local FollowUps = require(script.Parent.FollowUps) -- (events left waiting for later: profile.follow)
 local Babble = require(script.Parent.Babble)
+local Crates = require(script.Parent.Crates) -- (crates held, crate workplaces and pets: Sim/Crates)
 
 local Schema = {}
 
@@ -172,6 +173,15 @@ function Schema.newProfile(): any
 		likedPlots = {},
 		plotKeys = {},
 		plotAt = 0,
+		-- crates (Sim/Crates): the ones held to open later, by kind; the crate workplaces given, by
+		-- catalog id; the pets, by id ("p1"...), and the next pet's number; the gems crate jobs paid
+		-- on which real day; whether a villager has told the player about the crates
+		crates = {},
+		crateItems = {},
+		pets = {},
+		nextPet = 1,
+		crateGems = { day = -1, n = 0 },
+		crateTold = false,
 	}
 end
 
@@ -276,6 +286,7 @@ function Schema.migrate(raw: any): any
 	profile.skills = Skills.clean(profile.skills)
 	Bag.clean(profile)
 	Titles.clean(profile)
+	Crates.clean(profile)
 	-- (only true marks: Services/Vehicles also drops any vehicle there no longer is)
 	if type(profile.vehicles) ~= "table" then
 		profile.vehicles = {}

@@ -24,6 +24,7 @@ local SavesSim = require(Shared.Sim.Saves) -- (saved builds: what a load changes
 local LightsSim = require(Shared.Sim.Lights) -- (a light's switch, which a move or an undo keeps)
 local City = require(Shared.Sim.City) -- (a grand piece waits for the town's level: City.unlocked)
 local GemPieces = require(Shared.Sim.GemPieces) -- (pieces bought with gems: the fog machine)
+local Crates = require(Shared.Sim.Crates) -- (workplaces from work crates)
 local Gems = require(Shared.Sim.Gems)
 
 local Data = require(script.Parent.Data)
@@ -438,6 +439,11 @@ function Build.apply(player: Player, requests: any): (boolean, string?)
 		if not allowed then
 			return { false, why }
 		end
+		-- and a crate's workplace only as many times as crates gave it (Sim/Crates)
+		local crateOk, crateWhy = Crates.check(profile, requests)
+		if not crateOk then
+			return { false, crateWhy }
+		end
 		-- a VIP piece goes down only for a VIP owner (Build.vipCheck)
 		local vipOk, vipWhy = Build.vipCheck(profile, requests)
 		if not vipOk then
@@ -559,6 +565,11 @@ local function prepareEach(
 			end
 		end
 		if req.type == "add" and not Keepsakes.check(counting, { one }) then
+			skipped += 1
+			continue
+		end
+		-- (a crate's workplace: as many down as crates gave, none given on a load)
+		if req.type == "add" and not Crates.check({ plan = plan, crateItems = profile.crateItems }, { one }) then
 			skipped += 1
 			continue
 		end

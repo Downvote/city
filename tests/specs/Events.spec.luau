@@ -82,8 +82,14 @@ end
 
 local WEATHERS = { "clear", "cloudy", "rain", "storm", "snow", "blossom", "leaves" }
 
--- every workplace in the catalog, so any job can be somebody's
-local WORKPLACES = Catalog.workplaces()
+-- every coin workplace in the catalog, so any job the events know can be somebody's (a crate's
+-- jobs have no events of their own)
+local WORKPLACES = {}
+for _, def in Catalog.workplaces() do
+	if not def.crate then
+		table.insert(WORKPLACES, def)
+	end
+end
 
 -- the pieces some events need (Sim/PlotHas.Kinds), one of each kind
 local EVERYDAY = {

@@ -17,6 +17,7 @@
 
 local Text = require(script.Parent.Parent.Util.Text)
 local Rng = require(script.Parent.Parent.Util.Rng)
+local Jobs = require(script.Parent.Parent.Data.Jobs) -- (a crate job's own customers' lines)
 
 local Visits = {}
 
@@ -449,7 +450,9 @@ end
 function Visits.ask(job: string, pers: string?, rng: Rng.Rng?): string
 	local map = ASKS[job]
 	if not map then
-		return "One of those, please."
+		-- a crate job carries a few lines of its own (Data/Jobs' asks)
+		local j = Jobs.get(job)
+		return if j and j.asks then pickOf(rng, j.asks) else "One of those, please."
 	end
 	local own = pers and map[pers]
 	if type(own) == "string" and (not rng or rng:chance(0.6)) then
@@ -460,7 +463,8 @@ end
 
 -- What the worker says back. {name} is the customer's name.
 function Visits.serve(job: string, name: string?, rng: Rng.Rng?): string
-	local list = SERVES[job] or { "Here you go, and come again." }
+	local j = Jobs.get(job)
+	local list = SERVES[job] or (j and j.serves) or { "Here you go, and come again." }
 	return Text.fill(pickOf(rng, list), { name = name or "" })
 end
 

@@ -14,6 +14,7 @@ local Icons = require(script.Parent.Icons)
 local MenuParts = require(script.Parent.MenuParts)
 local State = require(script.Parent.Parent.Controllers.State)
 local Purchase = require(script.Parent.Parent.Controllers.Purchase)
+local Crates = require(script.Parent.Crates) -- (the Crates tab: work and pet crates)
 
 local Store = {}
 
@@ -310,6 +311,8 @@ local function fill()
 	clear()
 	if tab == "gems" then
 		showGems()
+	elseif tab == "crates" then
+		Crates.show(panel.body, { tag = Store.tag, price = Store.price })
 	else
 		showPasses()
 	end
@@ -330,24 +333,29 @@ function Store.close()
 	end
 end
 
--- Opens the store: on its Gems tab with `arg` "gems", else on the passes.
+-- Opens the store: on its Gems tab with `arg` "gems", its Crates tab with "crates", else on the
+-- passes.
 function Store.open(arg: any?)
 	Store.close()
-	tab = if arg == "gems" then "gems" else "passes"
+	tab = if arg == "gems" or arg == "crates" then arg else "passes"
 	panel = Kit.panel("Store", Kit.MenuSize, Store.close, "store", T.Purple, {
-		Caption = "Passes and gems",
-		Tabs = { { id = "passes", name = "Passes" }, { id = "gems", name = "Gems" } },
+		Caption = "Robux and gems",
+		Tabs = {
+			{ id = "passes", name = "Passes" },
+			{ id = "gems", name = "Gems" },
+			{ id = "crates", name = "Crates" },
+		},
 		OnTab = function(id: string)
 			tab = id
 			fill()
 		end,
 	})
-	if tab == "gems" and panel.selectTab then
-		panel.selectTab("gems")
+	if tab ~= "passes" and panel.selectTab then
+		panel.selectTab(tab)
 	end
 	fill()
 	-- what Roblox says was bought shows at once
-	for _, key in { "passes", "gems" } do
+	for _, key in { "passes", "gems", "crates" } do
 		-- (State.on calls at once with what is there already: that one is drawn)
 		local skip = State.data[key] ~= nil
 		table.insert(
