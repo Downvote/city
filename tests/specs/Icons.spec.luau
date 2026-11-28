@@ -102,31 +102,48 @@ describe("Icons", function()
 					error(name .. ": a flat icon has shading")
 				end
 			end
-			-- a dent (the coin's middle) is the same colour a step darker, and nothing else is
-			local dent = Icons.dentOf(glyph):ToHex()
-			local dented = false
-			for _, sh in Icons.defs[name] do
-				dented = dented or sh.dent == true
-			end
 			for hex in colours do
-				expect(hex == glyph:ToHex() or hex == hole:ToHex() or (dented and hex == dent)).toBeTruthy()
+				expect(hex == glyph:ToHex() or hex == hole:ToHex()).toBeTruthy()
 			end
 		end
 	end)
 
-	it("presses a darker circle into the coin", function()
-		local glyph = Color3.fromRGB(236, 162, 28)
-		local icon = Icons.flat("coin", 48, { Color = glyph })
-		local found = false
-		for _, d in icon:GetChildren() do
-			if d:IsA("Frame") and d.BackgroundColor3:ToHex() == Icons.dentOf(glyph):ToHex() then
-				found = true
-				-- inside the coin, and smaller than it
-				expect(d.Size.X.Scale < 0.7 and d.Position.X.Scale > 0.1).toBeTruthy()
+	it("draws the coin in one flat colour and the gem as one shape with nothing inside", function()
+		-- (the user: "redo the coins and gems icon, the coins should be only one color, and the gem
+		-- icon shouldnt have outlines inside")
+		local Vector = require("StarterPlayer.StarterPlayerScripts.Client.UI.Vector")
+		local IconArt = require("StarterPlayer.StarterPlayerScripts.Client.UI.IconArt")
+		for _, name in { "coin", "coins" } do
+			local pixels = Vector.raster(IconArt.art[name], 96, { Weight = Icons.Weight[96] })
+			local seen = {}
+			for i = 0, 96 * 96 - 1 do
+				if buffer.readu8(pixels, i * 4 + 3) == 255 then
+					seen[buffer.readu8(pixels, i * 4) .. "," .. buffer.readu8(pixels, i * 4 + 1)] = true
+				end
+			end
+			local tones = 0
+			for _ in seen do
+				tones += 1
+			end
+			if tones ~= 1 then
+				error(name .. " is painted in " .. tones .. " colours")
+			end
+			-- built from shapes, it is one colour with its cut out too
+			local icon = Icons.flat(name, 48, { Color = Color3.fromRGB(236, 162, 28), Hole = Color3.new(0, 0, 0) })
+			for _, d in icon:GetDescendants() do
+				if d:IsA("Frame") and d.BackgroundTransparency < 1 then
+					local hex = d.BackgroundColor3:ToHex():lower()
+					expect(hex == "eca21c" or hex == "000000").toBeTruthy()
+				end
 			end
 		end
-		expect(found).toBeTruthy()
-		expect(Icons.dentOf(glyph) ~= glyph).toBeTruthy()
+		for _, layer in IconArt.art.gem do
+			local l = if type(layer) == "string" then { layer } else layer
+			expect(l.cut ~= true).toBeTruthy()
+		end
+		for _, sh in Icons.defs.gem do
+			expect(sh.o ~= false).toBeTruthy()
+		end
 	end)
 
 	it("draws the hammer with a heavy head square across its handle", function()
@@ -367,9 +384,10 @@ describe("Icons", function()
 			if cuts == 0 then
 				error(food.id .. " has nothing cut out of it")
 			end
-			-- and kept simple (the user: "make food/item icons much simpler"): a few shapes and
-			-- the one or two cuts that say what it is, nothing finer
-			if #art > 7 or details > 3 then
+			-- and kept simple (the user: "make food/item icons much simpler", then "redo the the
+			-- food icons, make them simpler, and more like vector art"): a few shapes and the one
+			-- or two cuts that say what it is, nothing finer
+			if #art > 6 or details > 2 then
 				error(food.id .. " has too much in it: " .. #art .. " layers, " .. details .. " cuts")
 			end
 			-- at 48 across (what a 16 to 24 pixel icon is drawn from) the cuts take away a fair
@@ -476,5 +494,83 @@ describe("Icons", function()
 		for _, child in icon:GetChildren() do
 			expect(child.Name:sub(1, 3) ~= "Ink").toBeTruthy()
 		end
+	end)
+
+	it("gives every kind of news and every job an icon of its own", function()
+		-- (the user: "make different icons for different events in news", and "for work and news,
+		-- make different icons for different news and work types")
+		local NewsKinds = require("ReplicatedStorage.Shared.Data.NewsKinds")
+		local Jobs = require("ReplicatedStorage.Shared.Data.Jobs")
+		local Events = require("ReplicatedStorage.Shared.Data.Events")
+		local Interactions = require("ReplicatedStorage.Shared.Data.Interactions")
+		local function drawn(icon: string, what: string)
+			if not (Icons.hasArt(icon) and Icons.defs[icon]) then
+				error(what .. "'s icon " .. icon .. " needs its art and its shape list")
+			end
+		end
+		for kind, icon in NewsKinds.Icons do
+			drawn(icon, kind)
+		end
+		-- every job its own icon, no two the same
+		local used = {}
+		for _, job in Jobs.list do
+			local icon = Jobs.icon(job.id)
+			drawn(icon, job.id)
+			if used[icon] then
+				error(job.id .. " and " .. used[icon] .. " share an icon")
+			end
+			used[icon] = job.id
+			expect(NewsKinds.icon("job:" .. job.id)).toBe(icon)
+		end
+		-- every event named in the topics is real, and every event comes out as a kind with an icon
+		local ids = {}
+		for _, e in Events.list do
+			ids[e.id] = true
+		end
+		for kind, list in NewsKinds.Topics do
+			expect(NewsKinds.Icons[kind] ~= nil).toBeTruthy()
+			for _, id in list do
+				if not ids[id] then
+					error("no event " .. id .. " for the news kind " .. kind)
+				end
+			end
+		end
+		local kinds = {}
+		for _, e in Events.list do
+			local kind = NewsKinds.event(e.id, e.group, "baker")
+			kinds[kind] = true
+			drawn(NewsKinds.icon(kind), e.id)
+		end
+		local count = 0
+		for _ in kinds do
+			count += 1
+		end
+		expect(count >= 25).toBeTruthy()
+		-- a work event is told by the job of the villager it is about
+		local work
+		for _, e in Events.list do
+			if e.group == "work" and NewsKinds.event(e.id, e.group, nil) == "work" then
+				work = e
+				break
+			end
+		end
+		expect(work ~= nil).toBeTruthy()
+		expect(NewsKinds.event(work.id, work.group, "librarian")).toBe("job:librarian")
+		expect(NewsKinds.icon(NewsKinds.event(work.id, work.group, "librarian"))).toBe("book")
+		-- a go at something, by what was used
+		local uses = {}
+		for _, u in Interactions.uses do
+			uses[u.id] = true
+			drawn(NewsKinds.icon(NewsKinds.use(u.id)), u.id)
+		end
+		for id in NewsKinds.Uses do
+			if not uses[id] then
+				error("no use " .. id .. " for the news")
+			end
+		end
+		-- an old save's line, with no kind, is the paper
+		expect(NewsKinds.icon(nil)).toBe("news")
+		expect(NewsKinds.icon("no such kind")).toBe("news")
+		expect(NewsKinds.icon("job:nobody")).toBe("briefcase")
 	end)
 end)

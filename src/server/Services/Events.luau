@@ -32,6 +32,7 @@ local Text = require(Shared.Util.Text)
 local Remotes = require(Shared.Net.Remotes)
 local EventProps = require(Shared.Data.EventProps)
 local EventData = require(Shared.Data.Events)
+local NewsKinds = require(Shared.Data.NewsKinds)
 local Builder = require(Shared.Build.Builder)
 
 local Data = require(script.Parent.Data)
@@ -527,7 +528,10 @@ local function play(player: Player, ev: any)
 		table.remove(profile.recent)
 	end
 	if scene.log then
-		Data.log(player, scene.log)
+		-- a story from work is told by the job of the villager it is about
+		local def = EventData.get(ev.id)
+		local w = ev.order[1] and City.jobOf(profile, ev.order[1])
+		Data.log(player, scene.log, NewsKinds.event(ev.id, def and def.group, w and w.job.id))
 	end
 	endEvent:FireClient(player, { token = token, notices = notices })
 	for _, n in notices do
@@ -551,7 +555,7 @@ function Events.party(player: Player): boolean
 		return false
 	end
 	festival(player)
-	Data.log(player, "You threw a party.")
+	Data.log(player, "You threw a party.", "party")
 	local profile = Data.get(player)
 	if profile then
 		for _, vid in profile.order do
@@ -660,7 +664,8 @@ local function checkRequests(player: Player)
 			)
 			Data.log(
 				player,
-				Text.fill("{name} got {thing} by their bed.", { name = v.name, thing = Catalog.Tags[r.tag] or r.tag })
+				Text.fill("{name} got {thing} by their bed.", { name = v.name, thing = Catalog.Tags[r.tag] or r.tag }),
+				"request"
 			)
 		elseif (r.untilT or 0) < now then
 			table.remove(profile.requests, i)

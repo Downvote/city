@@ -319,7 +319,11 @@ local function settleAway(player: Player, profile: any)
 		return
 	end
 	Data.addCoins(player, got.coins)
-	Data.log(player, Text.fill("While you were away your villagers earned {n} coins.", { n = Text.commas(got.coins) }))
+	Data.log(
+		player,
+		Text.fill("While you were away your villagers earned {n} coins.", { n = Text.commas(got.coins) }),
+		"offline"
+	)
 	welcome[player] = { secs = got.secs, counted = got.counted, coins = got.coins, workers = got.workers }
 end
 

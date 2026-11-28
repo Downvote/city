@@ -8,6 +8,7 @@ local Catalog = require(Shared.Build.Catalog)
 local Schema = require(Shared.Sim.Schema)
 local Tuning = require(Shared.Config.Tuning)
 local Text = require(Shared.Util.Text)
+local NewsKinds = require(Shared.Data.NewsKinds)
 
 local Kit = require(script.Parent.Kit)
 local MenuParts = require(script.Parent.MenuParts)
@@ -303,7 +304,8 @@ local function draw()
 			)
 			for _, s in group do
 				order += 1
-				story(list, s.entry.text, when(s.entry.t, s.back), order, "news", T.Teal)
+				-- each kind of story by its own icon (Data/NewsKinds)
+				story(list, s.entry.text, when(s.entry.t, s.back), order, NewsKinds.icon(s.entry.kind), T.Teal)
 			end
 		end
 	end

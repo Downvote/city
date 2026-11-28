@@ -8,6 +8,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Remotes = require(Shared.Net.Remotes)
 local Tuning = require(Shared.Config.Tuning)
 local City = require(Shared.Sim.City)
+local Jobs = require(Shared.Data.Jobs)
 local Text = require(Shared.Util.Text)
 
 local Kit = require(script.Parent.Kit)
@@ -381,7 +382,7 @@ function draw()
 			Sub = if who
 				then Text.fill("{name}, about {n} coins a day", { name = who, n = amount or w.job.income })
 				else "Nobody works here yet. Pick someone on the Villagers screen.",
-			Marker = "briefcase",
+			Marker = Jobs.icon(w.job.id),
 			MarkerColor = if who then T.Purple else T.Line,
 		})
 		i += 1

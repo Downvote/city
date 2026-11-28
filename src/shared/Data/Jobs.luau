@@ -205,6 +205,31 @@ for _, j in list do
 	byId[j.id] = j
 end
 
+-- Each job's own icon (UI/IconArt), wherever work is listed: the job rows in the town panel, the
+-- villager screen's picker and its Job button, the notice while you work, a story about work in
+-- the news (the user: "for work and news, make different icons for different news and work
+-- types"). One table, so no two jobs share one.
+local ICONS: { [string]: string } = {
+	shopkeeper = "stall",
+	barista = "coffee",
+	baker = "bread",
+	florist = "flower",
+	artist = "styles",
+	doctor = "aid",
+	teacher = "gradcap",
+	musician = "guitar",
+	builder = "hardhat",
+	postie = "letter",
+	icecream = "icecream",
+	librarian = "book",
+}
+Jobs.Icons = ICONS
+
+-- The icon for a job (a briefcase for one with none of its own).
+function Jobs.icon(id: string?): string
+	return id and ICONS[id] or "briefcase"
+end
+
 -- Where the job is done, as people say it in a sentence ("at the bakery", "at the workshop"):
 -- the workplace pieces have names like "builder's bench" that nobody would say.
 function Jobs.placeOf(id: string?): string

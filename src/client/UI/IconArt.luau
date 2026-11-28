@@ -265,40 +265,38 @@ A.trophy = {
 
 -- money ------------------------------------------------------------------------------------------------
 
--- The coin keeps its gold and the darker circle pressed into its face (the user: "the coin icon
--- can have a darker circle inside as an indent").
-local GOLD, GOLD_DARK = Color3.fromRGB(240, 170, 40), Color3.fromRGB(196, 130, 24)
+-- The coin is one flat gold with a slot cut down its face, and nothing in a second tone (the
+-- user: "redo the coins and gems icon, the coins should be only one color"). It keeps its own
+-- colour wherever it shows; the two coins of `coins` are apart, the back one behind the front.
+local GOLD = Color3.fromRGB(236, 162, 28)
+local SLOT = rect(10.75, 6.5, 2.5, 11, 1.25)
 A.coin = {
 	{ circle(12, 12, 10), fill = GOLD },
-	{ circle(12, 12, 5.5), fill = GOLD_DARK },
+	hole(SLOT),
 }
 A.coins = {
-	{ circle(15, 14.5, 7), fill = GOLD },
-	{ circle(15, 14.5, 3.6), fill = GOLD_DARK },
-	{ circle(9, 9.5, 8.6), fill = true, cut = true },
-	{ circle(9, 9.5, 7), fill = GOLD },
-	{ circle(9, 9.5, 3.6), fill = GOLD_DARK },
+	{ circle(15.25, 14.75, 7.25), fill = GOLD },
+	{ circle(9, 9.25, 9), fill = true, cut = true },
+	{ circle(9, 9.25, 7.25), fill = GOLD },
+	hole(rect(7.75, 5.5, 2.5, 7.5, 1.25)),
 }
 
 -- The one colour forms of the art that has colours of its own, for where its own colours won't
 -- read: the coin on a yellow block (the user: "make a black icon for coins as well where it is
--- required"). The indent is a ring cut out of the coin's face, as the icons' details are.
-IconArt.mono = {
-	coin = {
-		{ circle(12, 12, 10), fill = true },
-		{ circle(12, 12, 6), fill = true, cut = true },
-		{ circle(12, 12, 4.25), fill = true },
-	},
-	coins = {
-		{ circle(15, 14.5, 7), fill = true },
-		{ circle(15, 14.5, 4.2), fill = true, cut = true },
-		{ circle(15, 14.5, 2.6), fill = true },
-		{ circle(9, 9.5, 8.6), fill = true, cut = true },
-		{ circle(9, 9.5, 7), fill = true },
-		{ circle(9, 9.5, 4.2), fill = true, cut = true },
-		{ circle(9, 9.5, 2.6), fill = true },
-	},
-}
+-- required"). The same drawing, in whatever colour is asked for.
+local MONO: { [string]: { Vector.Layer } } = {}
+IconArt.mono = MONO
+for _, name in { "coin", "coins" } do
+	local plain: { Vector.Layer } = {}
+	for _, layer in A[name] do
+		local l = table.clone(layer :: any)
+		if typeof(l.fill) == "Color3" then
+			l.fill = true
+		end
+		table.insert(plain, l)
+	end
+	MONO[name] = plain
+end
 
 -- clothes (the creator's tabs) ---------------------------------------------------------------------
 
@@ -658,13 +656,9 @@ A.barrel = {
 	gap("M2 7.5 H22", 1.75),
 	gap("M2 16.5 H22", 1.75),
 }
--- fancy: a cut gem
-A.gem = {
-	solid("M7 3 H17 L22 9 L12 21.5 L2 9 Z"),
-	gap("M1 9 H23", 1.75),
-	gap("M9.5 2 L8 9", 1.75),
-	gap("M14.5 2 L16 9", 1.75),
-}
+-- fancy, and the gems you buy: a cut gem as one solid shape, nothing drawn inside it (the user:
+-- "the gem icon shouldnt have outlines inside")
+A.gem = { solid("M7 3.5 H17 L21.5 9 L12 21 L2.5 9 Z") }
 -- playful: a balloon on its string
 A.balloon = {
 	flat(ellipse(12, 9, 7, 7.5)),
@@ -823,6 +817,88 @@ A.blossom = {
 }
 -- a leaf on the wind
 A.leaves = { flat("M3 21 Q3 7 21 3 Q21 21 3 21 Z"), gap("M6.5 17.5 L14.5 9.5", 1.75) }
+
+-- the news and the jobs (Data/NewsKinds, Data/Jobs) ------------------------------------------------
+
+-- a speech bubble with three dots cut out: a chat
+A.chat = {
+	solid(
+		"M5 3.5 H19 A3 3 0 0 1 22 6.5 V14 A3 3 0 0 1 19 17 H11.5 L6.5 21 V17 H5 A3 3 0 0 1 2 14 V6.5 A3 3 0 0 1 5 3.5 Z"
+	),
+	hole(circle(7.5, 10.25, 1.6) .. " " .. circle(12, 10.25, 1.6) .. " " .. circle(16.5, 10.25, 1.6)),
+}
+-- a five pointed star: the night sky
+A.star = {
+	solid(
+		"M12 2.75 L14.65 9.1 L21.5 9.65 L16.3 14.15 L17.9 20.85 L12 17.25 L6.1 20.85 L7.7 14.15 L2.5 9.65 L9.35 9.1 Z"
+	),
+}
+-- a paw print: the town's animals
+A.paw = {
+	flat(
+		"M12 12.25 C15.5 12.25 19 16 19 18.75 C19 20.5 17.75 21.5 16 21.5 C14.5 21.5 13.5 20.75 12 20.75 C10.5 20.75 9.5 21.5 8 21.5 C6.25 21.5 5 20.5 5 18.75 C5 16 8.5 12.25 12 12.25 Z"
+	),
+	flat(
+		circle(4.25, 11, 2.25)
+			.. " "
+			.. circle(8.75, 5.75, 2.5)
+			.. " "
+			.. circle(15.25, 5.75, 2.5)
+			.. " "
+			.. circle(19.75, 11, 2.25)
+	),
+}
+-- an envelope, its flap apart: letters and the post
+A.letter = { solid(rect(2, 5, 20, 14.5, 1.5)), gap("M2 6.25 L12 13 L22 6.25") }
+-- an open book, its two pages apart
+A.book = {
+	solid("M2 5.25 C5 3.75 8.75 4 11 5.75 V20.25 C8.75 18.5 5 18.25 2 19.75 Z"),
+	solid("M22 5.25 C19 3.75 15.25 4 13 5.75 V20.25 C15.25 18.5 19 18.25 22 19.75 Z"),
+}
+-- a cross on a rounded square: the clinic, and feeling poorly
+A.aid = {
+	flat(rect(2.5, 2.5, 19, 19, 3.5)),
+	hole("M10.25 6.5 H13.75 V10.25 H17.5 V13.75 H13.75 V17.5 H10.25 V13.75 H6.5 V10.25 H10.25 Z"),
+}
+-- somebody with a plus beside them: a villager moved in; with a minus: one moved away
+local NEWCOMER: { Vector.Layer } = {
+	flat(circle(8.75, 7, 4.5)),
+	solid("M1.75 21.5 V20 A6 6 0 0 1 7.75 14 H9.75 A6 6 0 0 1 15.75 20 V21.5 Z"),
+}
+A.personAdd = table.clone(NEWCOMER)
+table.insert(A.personAdd, flat("M17.5 3.5 H20 V7 H22.5 V9.5 H20 V13 H17.5 V9.5 H15 V7 H17.5 Z"))
+A.personLeave = table.clone(NEWCOMER)
+table.insert(A.personLeave, flat(rect(15, 7, 7.5, 2.5)))
+-- a flag on its pole: land of your own
+A.flag = { line("M5.25 3 V21.5", 2.25), solid("M7.5 3 H20.5 L17.5 7.5 L20.5 12 H7.5 Z") }
+-- a market stall: a scalloped awning on two posts over its counter
+A.stall = {
+	flat("M4 2 H20 L22 7.5 A2.5 2.5 0 0 1 17 7.5 A2.5 2.5 0 0 1 12 7.5 A2.5 2.5 0 0 1 7 7.5 A2.5 2.5 0 0 1 2 7.5 Z"),
+	flat(rect(3.5, 10, 2.5, 6) .. " " .. rect(18, 10, 2.5, 6)),
+	solid(rect(2, 15.5, 20, 6, 1)),
+}
+-- a cup to take away, its lid and its sleeve
+A.coffee = {
+	solid("M7 2.5 H17 L17.5 4 H19 V7 H5 V4 H6.5 Z"),
+	solid("M5.75 8.75 H18.25 L16.75 21.5 H7.25 Z"),
+	gap("M3 12.25 H21 M3 17 H21", 1.75),
+}
+-- a mortarboard with its tassel: the school
+A.gradcap = {
+	solid("M6 11.5 V16 C6 18.25 9 19.75 12 19.75 C15 19.75 18 18.25 18 16 V11.5 Z"),
+	line("M20.25 9.5 V16.5", 1.75),
+	clear("M12 3.5 L22.5 8.5 L12 13.5 L1.5 8.5 Z", 1.5),
+	solid("M12 3.5 L22.5 8.5 L12 13.5 L1.5 8.5 Z"),
+}
+-- a guitar standing up, its sound hole cut out
+A.guitar = {
+	flat(circle(12, 17, 5.5)),
+	flat(circle(12, 11, 4)),
+	flat(rect(10.9, 3.5, 2.2, 6)),
+	flat(rect(9.75, 1.5, 4.5, 3.5, 1)),
+	hole(circle(12, 14.5, 1.75)),
+	gap("M9 18.75 H15", 1.75),
+}
 
 -- the foods (UI/ItemArt): silhouettes by the same rules, shown in each food's own colour -------------
 
