@@ -840,6 +840,35 @@ describe("Shuffle", function()
 	end)
 end)
 
+describe("Buying a look on the server's word", function()
+	-- the user: "the buy outfit button isnt working" (Roblox lets only server scripts ask for
+	-- PromptBulkPurchase, so the client sends the lines and the server checks them: Shop.clean)
+	it("keeps only well formed lines, each once, and no more than Roblox takes", function()
+		local Shop = require(Shared .. "Avatar.Shop")
+		local lines = Shop.clean({
+			{ kind = "asset", id = 10 },
+			{ kind = "bundle", id = 10 },
+			{ kind = "asset", id = 10 },
+			{ kind = "gamepass", id = 5 },
+			{ kind = "asset", id = -3 },
+			{ kind = "asset", id = 1.5 },
+			{ kind = "asset", id = 0 / 0 },
+			"junk",
+			{ kind = "asset", id = "12" },
+		}, 20)
+		expect(#lines).toBe(2)
+		expect(lines[1].kind).toBe("asset")
+		expect(lines[2].kind).toBe("bundle")
+		expect(Shop.clean({}, 20)).toBe(nil)
+		expect(Shop.clean("nope", 20)).toBe(nil)
+		local many = {}
+		for i = 1, 40 do
+			table.insert(many, { kind = "asset", id = i })
+		end
+		expect(#Shop.clean(many, 20)).toBe(20)
+	end)
+end)
+
 describe("Buying a look", function()
 	-- the user: "allow players to buy items they select from the villager customization screen,
 	-- and allow players to buy the outfit of the villager"

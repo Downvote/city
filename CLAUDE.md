@@ -589,7 +589,10 @@ Shuffle picks from Roblox's recommendations (`Avatar/Shuffle`), the popular page
 swaps the sets in `Shuffle.Sets` too: a body worn, a head half the time (`Tuning.CreatorMore.ShuffleHead`) and moves
 (the user: "the randomize button should also select things from moves and heads"). The Villager / You switch sits at
 the creator's bottom left ("could you also put this at the bottom left?"), and the creator is shown on a clear noon. Buying
-goes through Roblox's own prompts (`UI/BuyLook`); body parts and moves are only bought as their set, and selling
+goes through Roblox's own prompts (`UI/BuyLook`): a whole look is one prompt that only the server may put up
+(`BuyLook` in `Services/Avatar`, the lines checked by `Shop.clean`; Roblox: "PromptBulkPurchase will only allow
+prompting from server scripts", and asked for on the client it did nothing: "the buy outfit button isnt working"),
+with one prompt a thing from the client where that fails; body parts and moves are only bought as their set, and selling
 other creators' items may need Allow Third Party Sales in the game's settings. Shared looks are liked once a player
 (`Avatar/Likes`), the counts written in batches, never once a press.
 Shapes were angular for a while (the user: "Use the format in zenless zone zero for buttons and details in ui

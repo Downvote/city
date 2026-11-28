@@ -1126,19 +1126,40 @@ Sim.run("buying: what is on, the whole look", function()
 	press("Bodies")
 	press("Body 2")
 	look()
+	-- the whole look in one prompt, put up by the server: Roblox lets only server scripts ask for
+	-- PromptBulkPurchase (the user: "the buy outfit button isnt working")
+	local sent = {}
+	local serverSays = true
+	Sim.remoteFn("BuyLook").OnServerInvoke = function(_, lines)
+		table.insert(sent, lines)
+		return serverSays
+	end
 	table.clear(Sim.prompted)
 	press("Buy outfit")
 	frames(2)
-	local bulk = Sim.prompted[1] and Sim.prompted[1].bulk
-	check(bulk ~= nil, "Buy outfit asks for the whole look in one prompt")
+	check(#sent == 1, "Buy outfit asks the server for the whole look in one prompt")
+	check(#Sim.prompted == 0, "and this screen asks Roblox for nothing itself")
 	local ids, kinds = {}, {}
-	for _, line in bulk or {} do
-		ids[line.Id] = true
-		kinds[line.Id] = line.Type.Name
+	for _, line in sent[1] or {} do
+		ids[line.id] = true
+		kinds[line.id] = line.kind
 	end
-	check(ids["1002"] and kinds["1002"] == "AvatarAsset", "the hair in it")
-	check(ids["2002"] and kinds["2002"] == "AvatarBundle", "the body as the set it came in")
-	check(not ids["20021"], "and not the body's parts one by one")
+	check(ids[1002] and kinds[1002] == "asset", "the hair in it")
+	check(ids[2002] and kinds[2002] == "bundle", "the body as the set it came in")
+	check(not ids[20021], "and not the body's parts one by one")
+	-- where the server can't, one prompt a thing
+	serverSays = false
+	table.clear(Sim.prompted)
+	Sim.advance(3)
+	press("Buy outfit")
+	frames(2)
+	local one = Sim.prompted[1]
+	check(one ~= nil and (one.asset ~= nil or one.bundle ~= nil), "where it can't, Roblox is asked one thing at a time")
+	local market = Harness.game():GetService("MarketplaceService")
+	market.PromptPurchaseFinished:Fire(Sim.player)
+	market.PromptBundlePurchaseFinished:Fire(Sim.player)
+	Sim.advance(1)
+	frames(2)
 	press("Body 2")
 	Creator.close()
 	frames(2)

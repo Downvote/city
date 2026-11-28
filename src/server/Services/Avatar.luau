@@ -17,6 +17,7 @@ local Bundles = require(Shared.Avatar.Bundles)
 local Categories = require(Shared.Avatar.Categories)
 local ColorWords = require(Shared.Avatar.ColorWords)
 local Likes = require(Shared.Avatar.Likes)
+local Shop = require(Shared.Avatar.Shop)
 local Colors = require(Shared.Util.Colors)
 local Remotes = require(Shared.Net.Remotes)
 local Tuning = require(Shared.Config.Tuning)
@@ -995,6 +996,37 @@ function Avatar.start()
 
 	-- (bundleId, kind?): kind is what the creator's tab is for. Anything but one of the four
 	-- kinds counts as not said, and the bundle's own label decides.
+	-- Buy outfit (the user: "the buy outfit button isnt working"): Roblox's one prompt for a whole
+	-- look may only be put up by a server script, so the client sends the things (Avatar/Shop.lines)
+	-- and this puts it up; false sends the client to one prompt a thing (UI/BuyLook)
+	local lastBuy: { [Player]: number } = {}
+	Remotes.fn("BuyLook").OnServerInvoke = function(player, raw)
+		local now = os.clock()
+		if lastBuy[player] and now - lastBuy[player] < 2 then
+			return false
+		end
+		lastBuy[player] = now
+		local lines = Shop.clean(raw, Tuning.CreatorMore.BuyMax)
+		if not lines then
+			return false
+		end
+		local ok = pcall(function()
+			local kinds = (Enum :: any).MarketplaceProductType
+			local items = {}
+			for _, line in lines do
+				table.insert(items, {
+					Type = if line.kind == "bundle" then kinds.AvatarBundle else kinds.AvatarAsset,
+					Id = string.format("%d", line.id),
+				})
+			end
+			(MarketplaceService :: any):PromptBulkPurchase(player, items, {})
+		end)
+		return ok
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		lastBuy[player] = nil
+	end)
+
 	Remotes.fn("CreatorBundle").OnServerInvoke = function(_, bundleId, kind)
 		if not isId(bundleId) then
 			return nil

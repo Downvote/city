@@ -21,6 +21,9 @@ Remotes.Functions = {
 	"CreatorClose", -- ()
 	"CreatorPreview", -- (appearance) -> cleaned appearance
 	"CreatorBundle", -- (bundleId) -> partial appearance
+	-- ({ { kind = "asset" | "bundle", id } }) -> ok: Roblox's one prompt for a whole look, put up by the
+	-- server (only server scripts may ask for MarketplaceService:PromptBulkPurchase); false: ask one by one
+	"BuyLook",
 	-- (it also takes what the creator's tab is for: (bundleId, kind?), kind "body", "head", "shoes" or "anim")
 	"CreatorFromUser", -- (name or "") -> appearance
 	"CreatorSearch", -- (query) -> items (used when the client can't search the catalog itself)

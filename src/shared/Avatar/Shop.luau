@@ -1,8 +1,10 @@
 --!strict
 -- Buying what a villager wears on Roblox (the user: "allow players to buy items they select from
 -- the villager customization screen, and allow players to buy the outfit of the villager,
--- including from the profile of the villager"). Roblox sells the items, not this game: the client
--- puts up Roblox's own purchase prompt (UI/BuyLook). This file works out what a look is made of
+-- including from the profile of the villager"). Roblox sells the items, not this game: Roblox's own
+-- purchase prompt goes up, one for the whole look from the server (Services/Avatar's BuyLook:
+-- Roblox lets only server scripts ask for MarketplaceService:PromptBulkPurchase), one thing at a
+-- time from the client where that fails (UI/BuyLook). This file works out what a look is made of
 -- as things Roblox sells.
 --
 -- A look holds asset ids. Clothes, faces and accessories are sold one by one. Body parts and
@@ -65,6 +67,34 @@ function Shop.lines(app: any, bundles: { { id: number, part: any } }?, most: num
 		end
 	end
 	return out
+end
+
+-- The lines a client asks the server to put up as one prompt, made safe: each { kind "asset" or
+-- "bundle", a whole positive id }, no id twice, at most `most` (Roblox takes 20 in one prompt).
+-- Nil when there is nothing usable.
+function Shop.clean(raw: any, most: number): { Line }?
+	if type(raw) ~= "table" then
+		return nil
+	end
+	local out: { Line } = {}
+	local seen: { [string]: boolean } = {}
+	for _, line in raw do
+		if #out >= most then
+			break
+		end
+		if type(line) == "table" and (line.kind == "asset" or line.kind == "bundle") then
+			local id = line.id
+			if type(id) == "number" and id == id and id > 0 and id % 1 == 0 and id < 2 ^ 53 then
+				local key = line.kind .. ":" .. string.format("%d", id)
+				if not seen[key] then
+					seen[key] = true
+					local kind: string = line.kind
+					table.insert(out, { kind = kind, id = id })
+				end
+			end
+		end
+	end
+	return if #out > 0 then out else nil
 end
 
 -- Is a catalog row for sale, as far as the row says? false when it says it isn't (off sale, or

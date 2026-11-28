@@ -4,9 +4,10 @@
 -- including from the profile of the villager"). Roblox sells the items and shows its own prompt;
 -- the game never touches the money. Avatar/Shop says what a look is made of as things for sale.
 --
--- BuyLook.item(id, isBundle?) puts up the prompt for one thing. BuyLook.look(app, bundles?) puts
--- up one prompt for the whole look where Roblox can (MarketplaceService:PromptBulkPurchase), and
--- otherwise one thing at a time, each waiting for the last prompt to close.
+-- BuyLook.item(id, isBundle?) puts up the prompt for one thing. BuyLook.look(app, bundles?) asks the
+-- server for one prompt for the whole look (Services/Avatar's BuyLook: MarketplaceService:
+-- PromptBulkPurchase, which only server scripts may call), and where that fails puts up one thing
+-- at a time, each waiting for the last prompt to close.
 
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
@@ -14,6 +15,8 @@ local Players = game:GetService("Players")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Shop = require(Shared.Avatar.Shop)
 local Tuning = require(Shared.Config.Tuning)
+
+local Remotes = require(Shared.Net.Remotes)
 
 local Toasts = require(script.Parent.Toasts)
 
@@ -81,18 +84,20 @@ function BuyLook.look(app: any, bundles: { { id: number, part: any } }?)
 		Toasts.show("Nothing here is sold on its own.", "info")
 		return
 	end
-	local bulk = pcall(function()
-		local kinds = (Enum :: any).MarketplaceProductType
-		local items = {}
-		for _, line in lines do
-			table.insert(items, {
-				Type = if line.kind == "bundle" then kinds.AvatarBundle else kinds.AvatarAsset,
-				Id = tostring(line.id),
-			})
-		end
-		(MarketplaceService :: any):PromptBulkPurchase(player, items, {})
+	-- one thing: its own prompt
+	if #lines == 1 then
+		BuyLook.item(lines[1].id, lines[1].kind == "bundle")
+		return
+	end
+	-- the whole look in one prompt, which only a server script may put up (Roblox: "PromptBulkPurchase
+	-- will only allow prompting from server scripts"; asked for here it did nothing at all: the user,
+	-- "the buy outfit button isnt working")
+	busy = true
+	local ok, bulk = pcall(function()
+		return Remotes.fn("BuyLook"):InvokeServer(lines)
 	end)
-	if not bulk then
+	busy = false
+	if not (ok and bulk == true) then
 		if #lines > 1 then
 			Toasts.show("Roblox will ask about each one in turn.", "info")
 		end

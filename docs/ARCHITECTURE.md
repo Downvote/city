@@ -2591,6 +2591,12 @@ shared."
   (`CreatorBundle(id, kind)`, `Categories.merge`). The Villager / You switch is anchored at the bottom left. The Creator
   spec checks the sets match the Heads and Moves tabs' bundle kinds.
 
+- (2026-11-28) Buy outfit: `UI/BuyLook.look` sends the look's lines (`Avatar/Shop.lines`) to the `BuyLook` remote
+  (`Services/Avatar`), which checks them (`Shop.clean`: asset or bundle, whole positive ids, each once, at most
+  `Tuning.CreatorMore.BuyMax`, one ask every 2 seconds) and calls `MarketplaceService:PromptBulkPurchase(player, items,
+  {})`, since Roblox lets only server scripts do that; false sends the client to one prompt a thing. A look of one
+  thing gets its own prompt from the client. The creator sim checks both ways; the Creator spec holds `Shop.clean`.
+
 ## The drawn city
 
 - `Services/World.stylize` sets the light from `Tuning.Look.Light` (Brightness, Exposure, Ambient, OutdoorAmbient,

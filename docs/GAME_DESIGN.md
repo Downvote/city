@@ -3582,6 +3582,12 @@ lamps and windows, and the lamps in the town's rooms. A ceiling light spreads it
 pool under it. They had been turned down when a bright fill lit every room anyway; with the darker, truer shade
 since, a lamp has to light its room itself.
 
+### Buy outfit fixed
+
+The user (2026-11-28): "the buy outfit button isnt working". Roblox puts up its one prompt for a whole outfit only
+when the game's server asks for it; the button asked from the player's own screen, where nothing happened. Now the
+server asks, and if Roblox won't, the player is asked about each thing in turn.
+
 ## 11. Writing
 
 The user's standing rule for all text: write like a person. Plain words, no em or en dashes, no stock AI words, no
