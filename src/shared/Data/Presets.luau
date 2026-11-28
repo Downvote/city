@@ -37,8 +37,9 @@ export type Preset = {
 -- finishes, from the town's palette: light walls, roofs a few steps darker and only gently
 -- coloured, the same trim white on every house
 local WHITE_BOARDS = { c = "F6F0E2", m = "WoodPlanks" } -- warm white
-local WHITE = { c = "F7F3EA", m = "SmoothPlastic" }
-local CREAM = { c = "F2E6CC", m = "SmoothPlastic" }
+-- (inside walls are boards too, as everywhere: never plain plastic)
+local WHITE = { c = "F7F3EA", m = "WoodPlanks" }
+local CREAM = { c = "F2E6CC", m = "WoodPlanks" }
 local BRICK = { c = "D8A48E", m = "Brick" } -- soft brick
 local SIDING_BLUE = { c = "B4CFEA", m = "WoodPlanks" } -- sky
 local OAK = { c = "C49A6C", m = "WoodPlanks" }

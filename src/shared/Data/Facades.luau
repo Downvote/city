@@ -207,6 +207,29 @@ end
 -- the same numbers every time, so its key never wavers; using it again is a copy with a new place.
 local kit: { [string]: Prim } = {}
 
+-- What a piece is made of where its drawing doesn't say (a piece is one material), by the first
+-- word of its name: windows, shop fronts and doors in painted timber, the fittings on a wall in
+-- painted metal, a banner in cloth. (Data/Surfaces picks for any other.)
+local MADE_OF: { [string]: string } = {
+	win = "Wood",
+	glazed = "Wood",
+	door = "Wood",
+	back = "Wood",
+	meter = "Metal",
+	aircon = "Metal",
+	pipe = "Metal",
+	arms = "Metal",
+	banner = "Fabric",
+	["roof:tank"] = "Metal",
+	["roof:vents"] = "Metal",
+	["roof:aerial"] = "Metal",
+	["roof:line"] = "Metal",
+	["roof:rail"] = "Metal",
+	["roof:frame"] = "Metal",
+	["roof:skylight"] = "Metal",
+	["roof:hut"] = "Concrete:Stucco",
+}
+
 local function piece(id: string, draw: (R) -> ()): Prim
 	local made: Prim? = kit[id]
 	if made then
@@ -214,6 +237,14 @@ local function piece(id: string, draw: (R) -> ()): Prim
 	end
 	local q = Recipe.new(WHITE, WHITE)
 	draw(q)
+	local mat = MADE_OF[id] or MADE_OF[string.match(id, "^[^:]+") or ""]
+	if mat then
+		for _, p in q.prims do
+			if p.mat == PLAIN then
+				p.mat = mat
+			end
+		end
+	end
 	local new = Geometry.piece(q.prims, false)
 	kit[id] = new
 	return new
